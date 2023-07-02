@@ -25,11 +25,11 @@ class Checkpoints():
         layers = self.split_layer_list(self.layers, shard_count)
         iterator = 0
         for shard in range(len(layers)): #Loop through the remaining layers
-            for i in range(body.pop()):
-                shards.setdefault(f"shard_{shard}", {})[f"layer_{iterator}"] = model["params"]["Left_Body"].pop(f"layer_{iterator}")
+            for i in range(layers.pop()):
+                shards.setdefault(f"shard_{shard}", {})[f"layer_{iterator}"] = model["params"]["layers"].pop(f"layer_{iterator}")
                 iterator += 1
         del model
-        if iterator == self.body_layers:
+        if iterator == self.layers:
             return shards #If check sum matchs, return shard dict
         else:
             raise Exception("Fuck.")
@@ -37,13 +37,13 @@ class Checkpoints():
     def deshard(self, model_class, shard_dict):
         for shard in list(shard_dict.keys()): #We need to be very careful with memory management here.
             for layer in list(shard_dict[f"{shard}"].keys()): #So we instantiate list objects for our loop.
-                model_class["params"]["Left_Body"][f"{layer}"] = shard_dict[f"{shard}"].pop(f"{layer}")
+                model_class["params"]["layers"][f"{layer}"] = shard_dict[f"{shard}"].pop(f"{layer}")
                 iterator += 1
         del shard_dict
-        if iterator == self.body_layers:
+        if iterator == self.layers:
             return model_class
         else:
-            raise Exception(f"Deshard layer count did not match. Expected {self.body_layers} layers but got {iterator}.")
+            raise Exception(f"Deshard layer count did not match. Expected {self.layers} layers but got {iterator}.")
 
     def shard_save(self, shard_dict):
         for shard in list(shard_dict.keys()): #Once again, we make sure to be careful with object classes so we can limit memory resources.
