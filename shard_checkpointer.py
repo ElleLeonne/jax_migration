@@ -35,9 +35,6 @@ class Checkpoints():
             raise Exception("Fuck.")
     
     def deshard(self, model_class, shard_dict):
-        model_class["params"]["LM_Head"] = shard_dict.pop("head")
-        model_class["params"]["LM_Arm"] = shard_dict.pop("arm")
-        iterator = 1
         for shard in list(shard_dict.keys()): #We need to be very careful with memory management here.
             for layer in list(shard_dict[f"{shard}"].keys()): #So we instantiate list objects for our loop.
                 model_class["params"]["Left_Body"][f"{layer}"] = shard_dict[f"{shard}"].pop(f"{layer}")
