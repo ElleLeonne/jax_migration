@@ -1,0 +1,43 @@
+import jax
+from flax.training import train_state
+import jax.numpy as jnp
+from optax import softmax_cross_entropy_with_integer_labels
+
+class CrossEntropyLoss():
+    """CrossEntropy for language modeling, with discrimintator"""
+    def __init__(self, ignore_index=-100):
+        self.ignore_index = ignore_index
+    def __call__(self, logits, labels):
+        mask = jnp.not_equal(labels, self.ignore_index) #Conditional mask
+        loss = softmax_cross_entropy_with_integer_labels(logits, labels)
+        return jnp.sum(loss * mask) / jnp.sum(mask)
+    
+cross_entropy = CrossEntropyLoss()
+
+#train_state.TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
+def compute_metrics(*, logits, labels):
+  loss = CrossEntropyLoss(logits=logits, labels=labels)
+  accuracy = jnp.mean(jnp.argmax(logits, -1) == labels)
+  metrics = {'loss': loss, 'accuracy': accuracy}
+  return metrics
+
+@jax.jit
+def train_step(state: train_state.TrainState, sample):
+    input_ids, attn_mask, position_ids, labels = sample #unpack our inputs
+
+    def loss_fn(params):
+        logits = state.apply_fn({'params': params}, input_ids, attn_mask, position_ids)
+        loss = cross_entropy(logits=logits, labels=labels)
+        return loss, logits
+
+    gradient_fn = jax.value_and_grad(loss_fn, has_aux=True)
+    (_, logits), grads = gradient_fn(state.params)
+    state = state.apply_gradients(grads=grads)
+    metrics = compute_metrics(logits=logits, labels=labels)
+    return state, metrics
+
+@jax.jit
+def eval_step(state, sample):
+    input_ids, attn_mask, position_ids, labels = sample
+    logits = state.apply_fn({'params': state.params}, input_ids, attn_mask, position_ids)
+    return compute_metrics(logits=logits, labels=labels)
