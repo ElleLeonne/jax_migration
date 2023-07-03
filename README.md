@@ -5,6 +5,12 @@ which may have the unintended consequence of stripping away ease of use or showi
 
 Jax is a low-level library, and is often better suited to custom built tools over generalizable libraries. Still, I hope this may still be useful to someone.
 
-Migrator: A tool for converter Pytorch weights to Jax Pytrees. Strips off PT weights into a list, and leaves you to assign the leaves.
+#Table of Contents
 
-Checkpointer: A tool for saving model shards in Orbax.
+Migrator: A tool to convert Pytorch weights to Jax Pytrees. Strips off PT weights into a list, and leaves you to assign the leaves yourself.
+
+Preprocessor: A class for preparing attention masks, position_ids, and labels. Pads, caches, and prepares data.
+
+Checkpointer: A tool for saving model shards in Orbax. Built to handle low memory systems where weights may cause overflow issues.
+
+Train & utils.trainer: Training pipeline tools for basic implementation of the flax_model. Designed to work with Preprocessor outputs.
